@@ -291,7 +291,8 @@ xint=      0[xX][0-9abcdefABCDEF]+
 
 <SC_LEX> {
     "/lex"      { yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
-    .+ | {EOL}   { /* do nothing */ }
+    [^/]+        { /* do nothing */ }
+    "/"          { /* do nothing */ }
     <<EOF>>     { throw new Error("Unexpected EOF"); }
 }
 
@@ -308,5 +309,4 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 [^] { return BAD_CHARACTER; }
-
 

@@ -13,7 +13,7 @@ import static org.junit.Assert.assertTrue;
 
 public class JisonLexerTest {
     @Test
-    public void lexesJisonEbnfOperatorsAndLexBlock() throws IOException {
+    public void testJisonEbnfOperatorsAndLexBlock() throws IOException {
         String input = "%lex\n%%\n\\s+ return 'WS'\n/lex\n%start spec\n%%\n"
                 + "spec : (ID | STRING)+ ID? ID* ;\n";
         _BisonLexer lexer = new _BisonLexer();
