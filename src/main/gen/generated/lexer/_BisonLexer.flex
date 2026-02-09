@@ -16,7 +16,7 @@ import static generated.GeneratedTypes.*;
   int percent_percent_count = 0;
   int nesting = 0;
   int context_state;
-  boolean lex_block = false;
+  boolean lexBlock = false;
 %}
 
 %public
@@ -160,8 +160,8 @@ xint=      0[xX][0-9abcdefABCDEF]+
   \"        {yybegin(SC_ESCAPED_STRING);}
   "_(\""      {yybegin(SC_ESCAPED_TSTRING);}
 
-  "%{"                { lex_block = false; yybegin(SC_PROLOGUE); }
-  "%lex"              { lex_block = true; yybegin(SC_PROLOGUE); }
+  "%{"                { lexBlock = false; yybegin(SC_PROLOGUE); }
+  "%lex"              { lexBlock = true; yybegin(SC_PROLOGUE); }
   "{"                 {nesting = 0; yybegin(SC_BRACED_CODE); }
   "%%"               { if(++percent_percent_count == 2) yybegin(SC_EPILOGUE); return BisonTokenType.token("%%"); }
 
@@ -284,8 +284,8 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 <SC_PROLOGUE> {
-    "/lex" { if (lex_block) { lex_block = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; } }
-    "%}" {  lex_block = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
+    "/lex" { if (lexBlock) { lexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; } else { } }
+    "%}" {  lexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
     ~"%}" { yypushback(2);}
     <<EOF>>   { throw new Error("Unexpected EOF"); }
 }
@@ -308,5 +308,4 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 [^] { return BAD_CHARACTER; }
-
 

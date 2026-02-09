@@ -491,7 +491,7 @@ public class _BisonLexer {
   int percent_percent_count = 0;
   int nesting = 0;
   int context_state;
-  boolean lex_block = false;
+  boolean lexBlock = false;
 
 
   /**
@@ -588,6 +588,10 @@ public class _BisonLexer {
       }
     }
     return -1;
+  }
+
+  private boolean zzIsEbnfToken(char current) {
+    return current == '(' || current == ')' || current == '*' || current == '+' || current == '?';
   }
 
 
@@ -702,7 +706,7 @@ public class _BisonLexer {
         }
       }
       char current = zzBuffer.charAt(zzMarkedPos);
-      if (current == '(' || current == ')' || current == '*' || current == '+' || current == '?') {
+      if (zzIsEbnfToken(current)) {
         zzStartRead = zzMarkedPos;
         zzMarkedPos = zzCurrentPos = zzMarkedPos + 1;
         return BisonTokenType.token(String.valueOf(current));
