@@ -14,11 +14,18 @@ import static org.junit.Assert.assertTrue;
 public class JisonLexerTest {
     @Test
     public void testJisonEbnfOperatorsAndLexBlock() throws IOException {
-        String input = "%lex\n%%\n\\s+ return 'WS'\n/lex\n%start spec\n%%\n"
+        String baseInput = "%lex\n%%\n\\s+ return 'WS'\n/lex\n%start spec\n%%\n"
                 + "spec : (ID | STRING)+ ID? ID* ;\n";
+
+        assertJisonInputLexes(baseInput, 1);
+        assertJisonInputLexes(baseInput + "%%\n", 2);
+    }
+
+    private static void assertJisonInputLexes(String input, int expectedPercentCount) throws IOException {
         _BisonLexer lexer = new _BisonLexer();
         lexer.reset(input, 0, input.length(), _BisonLexer.YYINITIAL);
 
+        int percentCount = 0;
         boolean sawPrologue = false;
         boolean sawEbnfOperator = false;
         IElementType token;
@@ -27,6 +34,9 @@ public class JisonLexerTest {
                 throw new AssertionError("Unexpected BAD_CHARACTER token");
             }
             String text = input.substring(lexer.getTokenStart(), lexer.getTokenEnd());
+            if ("%%".equals(text)) {
+                percentCount++;
+            }
             if ("(".equals(text) || ")".equals(text) || "*".equals(text) || "+".equals(text) || "?".equals(text)) {
                 assertEquals(GeneratedTypes.ID, token);
                 sawEbnfOperator = true;
@@ -38,5 +48,6 @@ public class JisonLexerTest {
 
         assertTrue("Expected lex block to be tokenized as a prologue literal.", sawPrologue);
         assertTrue("Expected EBNF operator tokens to be returned as IDs.", sawEbnfOperator);
+        assertEquals("Unexpected number of %% tokens.", expectedPercentCount, percentCount);
     }
 }

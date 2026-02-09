@@ -144,6 +144,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "="           {return BisonTokenType.token("="); }
   "|"           {return BisonTokenType.token("|"); }
   ";"           {return BisonTokenType.token(";"); }
+  // Tokenize Jison EBNF operators as IDs so they parse like symbols.
   "("|")"|"*"|"+"|"?"               { return ID; }
 
   {SPACE}       { return WHITE_SPACE; }
@@ -309,4 +310,3 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 [^] { return BAD_CHARACTER; }
-
