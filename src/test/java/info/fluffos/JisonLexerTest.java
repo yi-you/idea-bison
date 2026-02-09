@@ -17,8 +17,15 @@ public class JisonLexerTest {
 
     @Test
     public void testJisonEbnfOperatorsAndLexBlock() throws IOException {
-        String baseInput = "%lex\n%%\n\\s+ return 'WS'\n/lex\n%start spec\n%%\n"
-                + "spec : (ID | STRING)+ ID? ID* ;\n";
+        String baseInput = """
+                %lex
+                %%
+                \\s+ return 'WS'
+                /lex
+                %start spec
+                %%
+                spec : (ID | STRING)+ ID? ID* ;
+                """;
 
         assertJisonInputTokenizesCorrectly(baseInput, 1);
         assertJisonInputTokenizesCorrectly(baseInput + "%%\n", 2);
