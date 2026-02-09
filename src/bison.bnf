@@ -19,7 +19,7 @@
 }
 
 
-input    ::= prologue_declaration* '%%' rules_or_grammar_declaration+ '%%' epilogue?
+input    ::= prologue_declaration* '%%' rules_or_grammar_declaration+ ('%%' epilogue?)?
 prologue_declaration ::= prologue
            | grammar_declaration
            | '%<flag>'
@@ -97,13 +97,17 @@ rules    ::= ID_COLON BRACKETED_ID? ':' rhs ('|' rhs)* {
   methods=[getKey getValue getName setName getNameIdentifier getPresentation]
 }
 
-rhs      ::= (symbol BRACKETED_ID?
-            | TAG? braced_code BRACKETED_ID?
-            | predicate
-            | '%empty'
-            | '%prec' symbol
-            | ( '%dprec' | '%expect' | '%expect-rr' ) INT_LITERAL
-            | '%merge' TAG)*
+rhs      ::= (symbol BRACKETED_ID? ebnf_suffix?
+            | ebnf_group ebnf_suffix?
+             | TAG? braced_code BRACKETED_ID?
+             | predicate
+             | '%empty'
+             | '%prec' symbol
+             | ( '%dprec' | '%expect' | '%expect-rr' ) INT_LITERAL
+             | '%merge' TAG)*
+
+private ebnf_group ::= '(' rhs ('|' rhs)* ')'
+private ebnf_suffix ::= '?' | '*' | '+'
 
 variable ::= ID_OR_CHAR_LITERAL
 value    ::= ( ID_OR_CHAR_LITERAL | STRING | braced_code )?

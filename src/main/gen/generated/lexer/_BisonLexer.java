@@ -491,6 +491,7 @@ public class _BisonLexer {
   int percent_percent_count = 0;
   int nesting = 0;
   int context_state;
+  boolean lex_block = false;
 
 
   /**
@@ -551,6 +552,42 @@ public class _BisonLexer {
    */
   private boolean zzRefill() throws java.io.IOException {
     return true;
+  }
+
+  private boolean zzMatchSequence(int start, String sequence) {
+    int end = start + sequence.length();
+    if (end > zzEndRead) {
+      return false;
+    }
+    for (int i = 0; i < sequence.length(); i++) {
+      if (zzBuffer.charAt(start + i) != sequence.charAt(i)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean zzIsLexStart(int start) {
+    if (!zzMatchSequence(start, "%lex")) {
+      return false;
+    }
+    int next = start + 4;
+    if (next >= zzEndRead) {
+      return true;
+    }
+    return Character.isWhitespace(zzBuffer.charAt(next));
+  }
+
+  private int zzFindLexBlockEnd(int start) {
+    for (int i = start; i + 3 < zzEndRead; i++) {
+      if (zzBuffer.charAt(i) == '/'
+          && zzBuffer.charAt(i + 1) == 'l'
+          && zzBuffer.charAt(i + 2) == 'e'
+          && zzBuffer.charAt(i + 3) == 'x') {
+        return i + 4;
+      }
+    }
+    return -1;
   }
 
 
@@ -655,6 +692,23 @@ public class _BisonLexer {
    * @exception   java.io.IOException  if any I/O-Error occurs
    */
   public IElementType advance() throws java.io.IOException {
+    if (zzLexicalState == YYINITIAL && zzMarkedPos < zzEndRead) {
+      if (zzIsLexStart(zzMarkedPos)) {
+        int lexEnd = zzFindLexBlockEnd(zzMarkedPos + 4);
+        if (lexEnd != -1) {
+          zzStartRead = zzMarkedPos;
+          zzMarkedPos = zzCurrentPos = lexEnd;
+          return PROLOGUE_LITERAL;
+        }
+      }
+      char current = zzBuffer.charAt(zzMarkedPos);
+      if (current == '(' || current == ')' || current == '*' || current == '+' || current == '?') {
+        zzStartRead = zzMarkedPos;
+        zzMarkedPos = zzCurrentPos = zzMarkedPos + 1;
+        return BisonTokenType.token(String.valueOf(current));
+      }
+    }
+
     int zzInput;
     int zzAction;
 

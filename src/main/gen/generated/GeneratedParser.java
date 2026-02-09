@@ -258,7 +258,7 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // prologue_declaration* '%%' rules_or_grammar_declaration+ '%%' epilogue?
+  // prologue_declaration* '%%' rules_or_grammar_declaration+ ('%%' epilogue?)?
   static boolean input(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "input")) return false;
     boolean r;
@@ -266,7 +266,6 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
     r = input_0(b, l + 1);
     r = r && consumeToken(b, "%%");
     r = r && input_2(b, l + 1);
-    r = r && consumeToken(b, "%%");
     r = r && input_4(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -298,10 +297,12 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // epilogue?
+  // ('%%' epilogue?)?
   private static boolean input_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "input_4")) return false;
-    epilogue(b, l + 1);
+    if (consumeToken(b, "%%")) {
+      epilogue(b, l + 1);
+    }
     return true;
   }
 
@@ -588,7 +589,8 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (symbol BRACKETED_ID?
+  // (symbol BRACKETED_ID? ebnf_suffix?
+  //             | ebnf_group ebnf_suffix?
   //             | TAG? braced_code BRACKETED_ID?
   //             | predicate
   //             | '%empty'
@@ -607,7 +609,8 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // symbol BRACKETED_ID?
+  // symbol BRACKETED_ID? ebnf_suffix?
+  //             | ebnf_group ebnf_suffix?
   //             | TAG? braced_code BRACKETED_ID?
   //             | predicate
   //             | '%empty'
@@ -620,6 +623,7 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = rhs_0_0(b, l + 1);
     if (!r) r = rhs_0_1(b, l + 1);
+    if (!r) r = rhs_0_7(b, l + 1);
     if (!r) r = predicate(b, l + 1);
     if (!r) r = consumeToken(b, "%empty");
     if (!r) r = rhs_0_4(b, l + 1);
@@ -629,13 +633,14 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // symbol BRACKETED_ID?
+  // symbol BRACKETED_ID? ebnf_suffix?
   private static boolean rhs_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "rhs_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = symbol(b, l + 1);
     r = r && rhs_0_0_1(b, l + 1);
+    r = r && rhs_0_0_2(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -644,6 +649,13 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
   private static boolean rhs_0_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "rhs_0_0_1")) return false;
     consumeToken(b, BRACKETED_ID);
+    return true;
+  }
+
+  // ebnf_suffix?
+  private static boolean rhs_0_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "rhs_0_0_2")) return false;
+    ebnf_suffix(b, l + 1);
     return true;
   }
 
@@ -713,6 +725,70 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, "%merge");
     r = r && TAG(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // ebnf_group ebnf_suffix?
+  private static boolean rhs_0_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "rhs_0_7")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = ebnf_group(b, l + 1);
+    r = r && rhs_0_7_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // ebnf_suffix?
+  private static boolean rhs_0_7_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "rhs_0_7_1")) return false;
+    ebnf_suffix(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // '(' rhs ('|' rhs)* ')'
+  private static boolean ebnf_group(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ebnf_group")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, "(");
+    r = r && rhs(b, l + 1);
+    r = r && ebnf_group_2(b, l + 1);
+    r = r && consumeToken(b, ")");
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // ('|' rhs)*
+  private static boolean ebnf_group_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ebnf_group_2")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!ebnf_group_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "ebnf_group_2", c)) break;
+    }
+    return true;
+  }
+
+  // '|' rhs
+  private static boolean ebnf_group_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ebnf_group_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, "|");
+    r = r && rhs(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '?' | '*' | '+'
+  private static boolean ebnf_suffix(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ebnf_suffix")) return false;
+    boolean r;
+    r = consumeToken(b, "?");
+    if (!r) r = consumeToken(b, "*");
+    if (!r) r = consumeToken(b, "+");
     return r;
   }
 

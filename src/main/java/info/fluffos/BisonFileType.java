@@ -25,7 +25,7 @@ public class BisonFileType extends LanguageFileType {
     @NotNull
     @Override
     public String getDescription() {
-        return "Bison language file";
+        return "Bison/Jison language file";
     }
 
     @NotNull

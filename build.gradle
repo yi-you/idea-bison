@@ -8,6 +8,10 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
+
 group 'info.fluffos'
 version '20230902.02'
 

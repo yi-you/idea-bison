@@ -16,6 +16,7 @@ import static generated.GeneratedTypes.*;
   int percent_percent_count = 0;
   int nesting = 0;
   int context_state;
+  boolean lex_block = false;
 %}
 
 %public
@@ -143,6 +144,11 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "="           {return BisonTokenType.token("="); }
   "|"           {return BisonTokenType.token("|"); }
   ";"           {return BisonTokenType.token(";"); }
+  "("           {return BisonTokenType.token("("); }
+  ")"           {return BisonTokenType.token(")"); }
+  "*"           {return BisonTokenType.token("*"); }
+  "+"           {return BisonTokenType.token("+"); }
+  "?"           {return BisonTokenType.token("?"); }
 
   {SPACE}       { return WHITE_SPACE; }
   {Comment}           { return COMMENT; }
@@ -154,7 +160,8 @@ xint=      0[xX][0-9abcdefABCDEF]+
   \"        {yybegin(SC_ESCAPED_STRING);}
   "_(\""      {yybegin(SC_ESCAPED_TSTRING);}
 
-  "%{"                { yybegin(SC_PROLOGUE); }
+  "%{"                { lex_block = false; yybegin(SC_PROLOGUE); }
+  "%lex"              { lex_block = true; yybegin(SC_PROLOGUE); }
   "{"                 {nesting = 0; yybegin(SC_BRACED_CODE); }
   "%%"               { if(++percent_percent_count == 2) yybegin(SC_EPILOGUE); return BisonTokenType.token("%%"); }
 
@@ -277,7 +284,8 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 <SC_PROLOGUE> {
-    "%}" {  yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
+    "/lex" { if (lex_block) { lex_block = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; } }
+    "%}" {  lex_block = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
     ~"%}" { yypushback(2);}
     <<EOF>>   { throw new Error("Unexpected EOF"); }
 }
@@ -300,6 +308,5 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 [^] { return BAD_CHARACTER; }
-
 
 
