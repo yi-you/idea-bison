@@ -702,7 +702,7 @@ public class _BisonLexer {
         int lexEnd = zzFindLexBlockEnd(zzMarkedPos + LEX_BLOCK_START.length());
         if (lexEnd == -1) {
           isInLexBlock = false;
-          throw new Error("Unexpected EOF: unclosed %lex block. Add closing /lex directive.");
+          throw new Error("Unexpected EOF: unclosed %lex block. Add closing /lex directive (not %lex).");
         }
         zzStartRead = zzMarkedPos;
         zzMarkedPos = zzCurrentPos = lexEnd;

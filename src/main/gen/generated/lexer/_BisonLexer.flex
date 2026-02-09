@@ -17,6 +17,7 @@ import static generated.GeneratedTypes.*;
   int nesting = 0;
   int context_state;
   boolean isInLexBlock = false;
+  final int lexBlockEndPushback = "/lex".length() - 1;
 %}
 
 %public
@@ -284,7 +285,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 <SC_PROLOGUE> {
-    "/lex" { if (isInLexBlock) { isInLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; } else { yypushback("/lex".length() - 1); } }
+    "/lex" { if (isInLexBlock) { isInLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; } else { yypushback(lexBlockEndPushback); } }
     "%}" {  isInLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
     ~"%}" { yypushback(2);}
     <<EOF>>   { throw new Error("Unexpected EOF"); }
