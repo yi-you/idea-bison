@@ -16,7 +16,7 @@ import static generated.GeneratedTypes.*;
   int percent_percent_count = 0;
   int nesting = 0;
   int context_state;
-  boolean inLexBlock = false;
+  boolean isInLexBlock = false;
 %}
 
 %public
@@ -161,7 +161,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "_(\""      {yybegin(SC_ESCAPED_TSTRING);}
 
   "%{"                { yybegin(SC_PROLOGUE); }
-  "%lex"              { inLexBlock = true; yybegin(SC_PROLOGUE); }
+  "%lex"              { isInLexBlock = true; yybegin(SC_PROLOGUE); }
   "{"                 {nesting = 0; yybegin(SC_BRACED_CODE); }
   "%%"               { if(++percent_percent_count == 2) yybegin(SC_EPILOGUE); return BisonTokenType.token("%%"); }
 
@@ -284,8 +284,8 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 <SC_PROLOGUE> {
-    "/lex" { if (inLexBlock) { inLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; } else { yybegin(SC_PROLOGUE); } }
-    "%}" {  inLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
+    "/lex" { if (isInLexBlock) { isInLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; } else { yypushback(3); } }
+    "%}" {  isInLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
     ~"%}" { yypushback(2);}
     <<EOF>>   { throw new Error("Unexpected EOF"); }
 }

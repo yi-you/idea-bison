@@ -494,7 +494,7 @@ public class _BisonLexer {
   int percent_percent_count = 0;
   int nesting = 0;
   int context_state;
-  boolean inLexBlock = false;
+  boolean isInLexBlock = false;
 
 
   /**
@@ -700,7 +700,7 @@ public class _BisonLexer {
       if (zzIsLexStart(zzMarkedPos)) {
         int lexEnd = zzFindLexBlockEnd(zzMarkedPos + LEX_BLOCK_START.length());
         if (lexEnd == -1) {
-          throw new Error("Unexpected EOF");
+          throw new Error("Unexpected EOF: unclosed %lex block");
         }
         zzStartRead = zzMarkedPos;
         zzMarkedPos = zzCurrentPos = lexEnd;
