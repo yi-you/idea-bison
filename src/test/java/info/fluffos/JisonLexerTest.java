@@ -7,21 +7,24 @@ import generated.lexer._BisonLexer;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class JisonLexerTest {
+    private static final Set<String> EBNF_OPERATORS = Set.of("(", ")", "*", "+", "?");
+
     @Test
     public void testJisonEbnfOperatorsAndLexBlock() throws IOException {
         String baseInput = "%lex\n%%\n\\s+ return 'WS'\n/lex\n%start spec\n%%\n"
                 + "spec : (ID | STRING)+ ID? ID* ;\n";
 
-        assertJisonInputLexes(baseInput, 1);
-        assertJisonInputLexes(baseInput + "%%\n", 2);
+        assertJisonInputTokenizesCorrectly(baseInput, 1);
+        assertJisonInputTokenizesCorrectly(baseInput + "%%\n", 2);
     }
 
-    private static void assertJisonInputLexes(String input, int expectedPercentCount) throws IOException {
+    private static void assertJisonInputTokenizesCorrectly(String input, int expectedPercentCount) throws IOException {
         _BisonLexer lexer = new _BisonLexer();
         lexer.reset(input, 0, input.length(), _BisonLexer.YYINITIAL);
 
@@ -37,7 +40,7 @@ public class JisonLexerTest {
             if ("%%".equals(text)) {
                 percentCount++;
             }
-            if ("(".equals(text) || ")".equals(text) || "*".equals(text) || "+".equals(text) || "?".equals(text)) {
+            if (EBNF_OPERATORS.contains(text)) {
                 assertEquals(GeneratedTypes.ID, token);
                 sawEbnfOperator = true;
             }

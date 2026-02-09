@@ -295,7 +295,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
     /* Keep '/' separate so the /lex terminator can match before generic content. */
     [^/]+        { /* do nothing */ }
     "/"          { /* do nothing */ }
-    <<EOF>>     { throw new Error("Unexpected EOF"); }
+    <<EOF>>     { throw new Error("Unexpected EOF in lex block"); }
 }
 
   /*--------------------------------------------------------------.

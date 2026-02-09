@@ -841,7 +841,7 @@ public class _BisonLexer {
             }  // fall though
             case 480: break;
             case SC_LEX: {
-              throw new Error("Unexpected EOF");
+              throw new Error("Unexpected EOF in lex block");
             }  // fall though
             case 481: break;
             case SC_TAG: {
