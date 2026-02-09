@@ -696,11 +696,9 @@ public class _BisonLexer {
     if (zzLexicalState == YYINITIAL && zzMarkedPos < zzEndRead) {
       if (zzIsLexStart(zzMarkedPos)) {
         int lexEnd = zzFindLexBlockEnd(zzMarkedPos + 4);
-        if (lexEnd != -1) {
-          zzStartRead = zzMarkedPos;
-          zzMarkedPos = zzCurrentPos = lexEnd;
-          return PROLOGUE_LITERAL;
-        }
+        zzStartRead = zzMarkedPos;
+        zzMarkedPos = zzCurrentPos = (lexEnd != -1) ? lexEnd : zzEndRead;
+        return PROLOGUE_LITERAL;
       }
       char current = zzBuffer.charAt(zzMarkedPos);
       if (zzIsEbnfToken(current)) {

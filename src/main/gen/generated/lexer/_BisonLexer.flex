@@ -160,7 +160,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   \"        {yybegin(SC_ESCAPED_STRING);}
   "_(\""      {yybegin(SC_ESCAPED_TSTRING);}
 
-  "%{"                { inLexBlock = false; yybegin(SC_PROLOGUE); }
+  "%{"                { yybegin(SC_PROLOGUE); }
   "%lex"              { inLexBlock = true; yybegin(SC_PROLOGUE); }
   "{"                 {nesting = 0; yybegin(SC_BRACED_CODE); }
   "%%"               { if(++percent_percent_count == 2) yybegin(SC_EPILOGUE); return BisonTokenType.token("%%"); }
@@ -284,7 +284,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 <SC_PROLOGUE> {
-    "/lex" { if (inLexBlock) { inLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; } }
+    "/lex" { if (inLexBlock) { inLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; } else { yybegin(SC_PROLOGUE); } }
     "%}" {  inLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
     ~"%}" { yypushback(2);}
     <<EOF>>   { throw new Error("Unexpected EOF"); }
