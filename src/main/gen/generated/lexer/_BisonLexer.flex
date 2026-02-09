@@ -144,7 +144,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "="           {return BisonTokenType.token("="); }
   "|"           {return BisonTokenType.token("|"); }
   ";"           {return BisonTokenType.token(";"); }
-  // Tokenize Jison EBNF operators as IDs so they parse like symbols.
+  /* Tokenize Jison EBNF operators as IDs so they parse like symbols. */
   "("|")"|"*"|"+"|"?"               { return ID; }
 
   {SPACE}       { return WHITE_SPACE; }
@@ -292,6 +292,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
 
 <SC_LEX> {
     "/lex"      { yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
+    /* Keep '/' separate so the /lex terminator can match before generic content. */
     [^/]+        { /* do nothing */ }
     "/"          { /* do nothing */ }
     <<EOF>>     { throw new Error("Unexpected EOF"); }
