@@ -59,7 +59,7 @@ CommentContent       = ( [^*] | \*+ [^/*] )*
 int=       [0-9]+
 xint=      0[xX][0-9abcdefABCDEF]+
 
-%x SC_PROLOGUE SC_BRACED_CODE SC_PREDICATE SC_EPILOGUE
+%x SC_PROLOGUE SC_BRACED_CODE SC_PREDICATE SC_EPILOGUE SC_LEX
 
 %x SC_TAG
 
@@ -117,6 +117,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "%union"                          { return BisonTokenType.directive("union"); }
   "%verbose"                        { return BisonTokenType.directive("VERBOSE"); }
   "%yacc"                           { return BisonTokenType.directive("yacc"); }
+  "%lex"                            { yybegin(SC_LEX); }
   /* Deprecated since Bison 2.3b (2008-05-27), but the warning is
      issued only since Bison 3.4. */
   "%pure"[-_]"parser"                { return BisonTokenType.directive("PURE_PARSER"); }
@@ -143,6 +144,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "="           {return BisonTokenType.token("="); }
   "|"           {return BisonTokenType.token("|"); }
   ";"           {return BisonTokenType.token(";"); }
+  "("|")"|"*"|"+"|"?"               { return ID; }
 
   {SPACE}       { return WHITE_SPACE; }
   {Comment}           { return COMMENT; }
@@ -287,6 +289,12 @@ xint=      0[xX][0-9abcdefABCDEF]+
     <<EOF>>   { yybegin(YYINITIAL); return EPILOGUE_LITERAL; }
 }
 
+<SC_LEX> {
+    "/lex"      { yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
+    .+ | {EOL}   { /* do nothing */ }
+    <<EOF>>     { throw new Error("Unexpected EOF"); }
+}
+
   /*--------------------------------------------------------------.
   | Scanning a tag.  The initial angle bracket is already eaten.  |
   `--------------------------------------------------------------*/
@@ -300,6 +308,5 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 [^] { return BAD_CHARACTER; }
-
 
 

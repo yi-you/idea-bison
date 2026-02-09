@@ -1,5 +1,5 @@
 # idea-bison
-idea bison grammar support
+idea bison/jison grammar support
 
 
 

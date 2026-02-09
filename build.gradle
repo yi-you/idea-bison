@@ -11,6 +11,10 @@ repositories {
 group 'info.fluffos'
 version '20230902.02'
 
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
+
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
     version = '2022.3'

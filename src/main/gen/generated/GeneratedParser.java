@@ -258,7 +258,7 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // prologue_declaration* '%%' rules_or_grammar_declaration+ '%%' epilogue?
+  // prologue_declaration* '%%' rules_or_grammar_declaration+ ( '%%' epilogue? )?
   static boolean input(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "input")) return false;
     boolean r;
@@ -266,8 +266,7 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
     r = input_0(b, l + 1);
     r = r && consumeToken(b, "%%");
     r = r && input_2(b, l + 1);
-    r = r && consumeToken(b, "%%");
-    r = r && input_4(b, l + 1);
+    r = r && input_3(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -294,6 +293,25 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
       if (!rules_or_grammar_declaration(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "input_2", c)) break;
     }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // ('%%' epilogue?)?
+  private static boolean input_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "input_3")) return false;
+    input_3_0(b, l + 1);
+    return true;
+  }
+
+  // '%%' epilogue?
+  private static boolean input_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "input_3_0")) return false;
+    if (!nextTokenIs(b, "%%")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, "%%");
+    r = r && input_4(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
