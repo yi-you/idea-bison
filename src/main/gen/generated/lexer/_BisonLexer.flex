@@ -284,7 +284,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 <SC_PROLOGUE> {
-    "/lex" { if (isInLexBlock) { isInLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; } else { yypushback(3); } }
+    "/lex" { if (isInLexBlock) { isInLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; } else { yypushback("/lex".length() - 1); } }
     "%}" {  isInLexBlock = false; yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
     ~"%}" { yypushback(2);}
     <<EOF>>   { throw new Error("Unexpected EOF"); }

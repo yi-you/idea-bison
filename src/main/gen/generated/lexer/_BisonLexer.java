@@ -698,12 +698,15 @@ public class _BisonLexer {
   public IElementType advance() throws java.io.IOException {
     if (zzLexicalState == YYINITIAL && zzMarkedPos < zzEndRead) {
       if (zzIsLexStart(zzMarkedPos)) {
+        isInLexBlock = true;
         int lexEnd = zzFindLexBlockEnd(zzMarkedPos + LEX_BLOCK_START.length());
         if (lexEnd == -1) {
-          throw new Error("Unexpected EOF: unclosed %lex block");
+          isInLexBlock = false;
+          throw new Error("Unexpected EOF: unclosed %lex block. Add closing /lex directive.");
         }
         zzStartRead = zzMarkedPos;
         zzMarkedPos = zzCurrentPos = lexEnd;
+        isInLexBlock = false;
         return PROLOGUE_LITERAL;
       }
       char current = zzBuffer.charAt(zzMarkedPos);
