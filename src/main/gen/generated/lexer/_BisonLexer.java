@@ -17,6 +17,9 @@ import static generated.GeneratedTypes.*;
  */
 public class _BisonLexer {
 
+  private static final String LEX_BLOCK_START = "%lex";
+  private static final String LEX_BLOCK_END = "/lex";
+
   /** This character denotes the end of file */
   public static final int YYEOF = -1;
 
@@ -568,10 +571,10 @@ public class _BisonLexer {
   }
 
   private boolean zzIsLexStart(int start) {
-    if (!zzMatchSequence(start, "%lex")) {
+    if (!zzMatchSequence(start, LEX_BLOCK_START)) {
       return false;
     }
-    int next = start + 4;
+    int next = start + LEX_BLOCK_START.length();
     if (next >= zzEndRead) {
       return true;
     }
@@ -579,9 +582,9 @@ public class _BisonLexer {
   }
 
   private int zzFindLexBlockEnd(int start) {
-    for (int i = start; i + 4 <= zzEndRead; i++) {
-      if (zzMatchSequence(i, "/lex")) {
-        return i + 4;
+    for (int i = start; i + LEX_BLOCK_END.length() <= zzEndRead; i++) {
+      if (zzMatchSequence(i, LEX_BLOCK_END)) {
+        return i + LEX_BLOCK_END.length();
       }
     }
     return -1;
@@ -695,9 +698,12 @@ public class _BisonLexer {
   public IElementType advance() throws java.io.IOException {
     if (zzLexicalState == YYINITIAL && zzMarkedPos < zzEndRead) {
       if (zzIsLexStart(zzMarkedPos)) {
-        int lexEnd = zzFindLexBlockEnd(zzMarkedPos + 4);
+        int lexEnd = zzFindLexBlockEnd(zzMarkedPos + LEX_BLOCK_START.length());
+        if (lexEnd == -1) {
+          throw new Error("Unexpected EOF");
+        }
         zzStartRead = zzMarkedPos;
-        zzMarkedPos = zzCurrentPos = (lexEnd != -1) ? lexEnd : zzEndRead;
+        zzMarkedPos = zzCurrentPos = lexEnd;
         return PROLOGUE_LITERAL;
       }
       char current = zzBuffer.charAt(zzMarkedPos);
