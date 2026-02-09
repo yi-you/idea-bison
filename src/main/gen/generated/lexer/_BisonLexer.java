@@ -491,7 +491,7 @@ public class _BisonLexer {
   int percent_percent_count = 0;
   int nesting = 0;
   int context_state;
-  boolean lexBlock = false;
+  boolean inLexBlock = false;
 
 
   /**
@@ -579,11 +579,8 @@ public class _BisonLexer {
   }
 
   private int zzFindLexBlockEnd(int start) {
-    for (int i = start; i + 3 < zzEndRead; i++) {
-      if (zzBuffer.charAt(i) == '/'
-          && zzBuffer.charAt(i + 1) == 'l'
-          && zzBuffer.charAt(i + 2) == 'e'
-          && zzBuffer.charAt(i + 3) == 'x') {
+    for (int i = start; i + 4 <= zzEndRead; i++) {
+      if (zzMatchSequence(i, "/lex")) {
         return i + 4;
       }
     }
