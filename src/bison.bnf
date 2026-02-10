@@ -42,6 +42,7 @@ prologue_declaration ::= prologue
            | '%options' ID*
            | '%ebnf'
            | '%include' STRING?
+           | ( '%s' | '%x' ) ID+
            | error? ';'
 
 
@@ -93,6 +94,7 @@ token_decl_for_prec
 rules_or_grammar_declaration
          ::= rules ';'?
          | grammar_declaration ';'
+         | prologue
 
 rules    ::= ID_COLON BRACKETED_ID? ':' rhs ('|' rhs)* {
   mixin="info.fluffos.BisonNamedElementImpl"

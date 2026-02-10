@@ -470,6 +470,68 @@ public class JisonLexerTest {
                 tokens.stream().noneMatch(t -> TokenType.BAD_CHARACTER.equals(t.type)));
     }
 
+    @Test
+    public void testJisonPrologueInRulesSection() throws IOException {
+        // Issue 1: %{...%} blocks can appear in the grammar rules section in Jison
+        String input = "%left '+' '-'\n" +
+                "%%\n" +
+                "%{\n" +
+                "  var temp = 42;\n" +
+                "%}\n" +
+                "e\n" +
+                "    : e '+' e\n" +
+                "    | NUMBER\n" +
+                "    ;\n";
+        List<TokenInfo> tokens = tokenize(input);
+        // Verify no BAD_CHARACTER
+        assertTrue("No BAD_CHARACTER tokens should be present.",
+                tokens.stream().noneMatch(t -> TokenType.BAD_CHARACTER.equals(t.type)));
+        // Verify prologue literal is present (from %{...%})
+        assertTrue("Expected PROLOGUE_LITERAL for %{...%} block.",
+                tokens.stream().anyMatch(t -> GeneratedTypes.PROLOGUE_LITERAL.equals(t.type)));
+        // Verify no token gaps
+        assertNoTokenGaps(input);
+    }
+
+    @Test
+    public void testJisonStartConditionDirectives() throws IOException {
+        // Issue 2: %s and %x (Jison/Flex start condition directives) should be recognized
+        String input = "%s INITIAL COMMENT\n" +
+                "%x STRING\n" +
+                "%%\n" +
+                "spec : ID ;\n";
+        List<TokenInfo> tokens = tokenize(input);
+        // Verify %s is tokenized as a directive
+        assertTrue("Expected %s to be tokenized as a directive.",
+                tokens.stream().anyMatch(t ->
+                        t.type instanceof BisonTokenType.BisonDirective && "s".equals(t.name())));
+        // Verify %x is tokenized as a directive
+        assertTrue("Expected %x to be tokenized as a directive.",
+                tokens.stream().anyMatch(t ->
+                        t.type instanceof BisonTokenType.BisonDirective && "x".equals(t.name())));
+        // Verify no BAD_CHARACTER
+        assertTrue("No BAD_CHARACTER tokens should be present.",
+                tokens.stream().noneMatch(t -> TokenType.BAD_CHARACTER.equals(t.type)));
+    }
+
+    @Test
+    public void testJisonStartConditionsDontConflictWithLongerDirectives() throws IOException {
+        // %s should not conflict with %start or %skeleton
+        String input = "%start expr\n" +
+                "%s COMMENT\n" +
+                "%%\n" +
+                "expr : ID ;\n";
+        List<TokenInfo> tokens = tokenize(input);
+        // Verify %start is recognized as "start" directive
+        assertTrue("Expected %start directive.",
+                tokens.stream().anyMatch(t ->
+                        t.type instanceof BisonTokenType.BisonDirective && "start".equals(t.name())));
+        // Verify %s is recognized as "s" directive
+        assertTrue("Expected %s directive.",
+                tokens.stream().anyMatch(t ->
+                        t.type instanceof BisonTokenType.BisonDirective && "s".equals(t.name())));
+    }
+
     private record TokenInfo(IElementType type, String text) {
         String name() {
             // Extract directive/token name from toString: "BisonTokenType.NAME"
