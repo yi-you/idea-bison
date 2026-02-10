@@ -265,6 +265,175 @@ public class JisonLexerTest {
                         GeneratedTypes.ID.equals(t.type) && "+".equals(t.text)));
     }
 
+    @Test
+    public void testLexerDoesNotThrowOnEofInString() throws IOException {
+        // Unterminated string - should not throw, should return BAD_CHARACTER
+        String input = "%%\nfoo : \"unterminated";
+        List<TokenInfo> tokens = tokenize(input);
+        // Should complete without exception
+        assertTrue("Unterminated string should produce BAD_CHARACTER.",
+                tokens.stream().anyMatch(t -> TokenType.BAD_CHARACTER.equals(t.type)));
+    }
+
+    @Test
+    public void testLexerDoesNotThrowOnEofInCharLiteral() throws IOException {
+        // Unterminated character literal
+        String input = "%%\nfoo : 'x";
+        List<TokenInfo> tokens = tokenize(input);
+        assertTrue("Unterminated char literal should produce BAD_CHARACTER.",
+                tokens.stream().anyMatch(t -> TokenType.BAD_CHARACTER.equals(t.type)));
+    }
+
+    @Test
+    public void testLexerDoesNotThrowOnEofInBracedCode() throws IOException {
+        // Unterminated braced code
+        String input = "%%\nfoo : bar { unclosed";
+        List<TokenInfo> tokens = tokenize(input);
+        assertTrue("Unterminated braced code should produce BAD_CHARACTER.",
+                tokens.stream().anyMatch(t -> TokenType.BAD_CHARACTER.equals(t.type)));
+    }
+
+    @Test
+    public void testLexerDoesNotThrowOnEofInLexBlock() throws IOException {
+        // Unterminated %lex block (no /lex)
+        String input = "%lex\n%%\nsome lex content";
+        List<TokenInfo> tokens = tokenize(input);
+        assertTrue("Unterminated lex block should produce BAD_CHARACTER.",
+                tokens.stream().anyMatch(t -> TokenType.BAD_CHARACTER.equals(t.type)));
+    }
+
+    @Test
+    public void testLexerDoesNotThrowOnEofInComment() throws IOException {
+        // Unterminated block comment
+        String input = "%%\nfoo : bar /* unterminated comment";
+        List<TokenInfo> tokens = tokenize(input);
+        assertTrue("Unterminated comment should produce BAD_CHARACTER.",
+                tokens.stream().anyMatch(t -> TokenType.BAD_CHARACTER.equals(t.type)));
+    }
+
+    @Test
+    public void testLexerDoesNotThrowOnEofInPrologue() throws IOException {
+        // Unterminated prologue (%{ without %})
+        String input = "%{\n  some prologue code";
+        List<TokenInfo> tokens = tokenize(input);
+        assertTrue("Unterminated prologue should produce BAD_CHARACTER.",
+                tokens.stream().anyMatch(t -> TokenType.BAD_CHARACTER.equals(t.type)));
+    }
+
+    @Test
+    public void testLexerDoesNotThrowOnEofInTag() throws IOException {
+        // Unterminated tag (<type without >)
+        String input = "%%\nfoo : <incomplete_type";
+        List<TokenInfo> tokens = tokenize(input);
+        assertTrue("Unterminated tag should produce BAD_CHARACTER.",
+                tokens.stream().anyMatch(t -> TokenType.BAD_CHARACTER.equals(t.type)));
+    }
+
+    @Test
+    public void testTokenPositionsCoverEntireInput() throws IOException {
+        // Verify that token positions cover the entire input (no gaps, end matches length)
+        String input = """
+                %left '+' '-'
+                %%
+                e : e '+' e | NUMBER ;
+                """;
+        _BisonLexer lexer = new _BisonLexer();
+        lexer.reset(input, 0, input.length(), _BisonLexer.YYINITIAL);
+
+        int lastEnd = 0;
+        IElementType token;
+        while ((token = lexer.advance()) != null) {
+            int start = lexer.getTokenStart();
+            int end = lexer.getTokenEnd();
+            assertTrue("Token start should be >= lastEnd. start=" + start + " lastEnd=" + lastEnd,
+                    start >= lastEnd);
+            assertTrue("Token end should be > start. end=" + end + " start=" + start,
+                    end > start);
+            lastEnd = end;
+        }
+        assertEquals("Last token end should equal input length.", input.length(), lastEnd);
+    }
+
+    @Test
+    public void testTokenPositionsCoverEntireInputWithEpilogue() throws IOException {
+        String input = """
+                %%
+                e : NUMBER ;
+                %%
+                some epilogue code
+                """;
+        _BisonLexer lexer = new _BisonLexer();
+        lexer.reset(input, 0, input.length(), _BisonLexer.YYINITIAL);
+
+        int lastEnd = 0;
+        IElementType token;
+        while ((token = lexer.advance()) != null) {
+            lastEnd = lexer.getTokenEnd();
+        }
+        assertEquals("Last token end should equal input length.", input.length(), lastEnd);
+    }
+
+    @Test
+    public void testSemwhitespaceLexJison() throws IOException {
+        // Content from zaach/jison examples/semwhitespace_lex.jison
+        // This is a Jison lex file that should not crash the lexer
+        String input = """
+                /* Demonstrates semantic whitespace pseudo-tokens, INDENT/DEDENT. */
+
+                id\t\t\t[a-zA-Z][a-zA-Z0-9]*
+                spc\t\t\t[\\t \\u00a0]
+
+                %s EXPR
+
+                %%
+                "if"\t\t\t\treturn 'IF';
+                "else"\t\t\t\treturn 'ELSE';
+                "print"\t\t\t\treturn 'PRINT';
+                ":"\t\t\t\treturn 'COLON';
+                "("\t\t\t\tthis.begin('EXPR'); return 'LPAREN';
+                ")"\t\t\t\tthis.popState(); return 'RPAREN';
+                {id}\t\t\t\treturn 'ID';
+                <<EOF>>\t\t\t\treturn "ENDOFFILE";
+                <INITIAL>\\s*<<EOF>>\t\t%{
+                \t\t\t\t\tvar tokens = [];
+                \t\t\t\t\twhile (0 < _iemitstack[0]) {
+                \t\t\t\t\t\tthis.popState();
+                \t\t\t\t\t\ttokens.unshift("DEDENT");
+                \t\t\t\t\t\t_iemitstack.shift();
+                \t\t\t\t\t}
+                \t\t\t\t\tif (tokens.length) return tokens;
+                \t\t\t\t%}
+                {spc}+\t\t\t\t/* ignore all other whitespace */
+
+                %%
+                /* initialize the pseudo-token stack with 0 indents */
+                _iemitstack = [0];
+                """;
+        // Should not throw any exceptions
+        List<TokenInfo> tokens = tokenize(input);
+        assertTrue("Should produce some tokens.", !tokens.isEmpty());
+    }
+
+    @Test
+    public void testLexerResetClearsState() throws IOException {
+        // First, lex something that sets internal state
+        String input1 = "%left '+'\n%%\ne : NUMBER ;";
+        _BisonLexer lexer = new _BisonLexer();
+        lexer.reset(input1, 0, input1.length(), _BisonLexer.YYINITIAL);
+        while (lexer.advance() != null) { /* consume all */ }
+
+        // Reset with new input - should work correctly
+        String input2 = "%right '-'\n%%\nf : ID ;";
+        lexer.reset(input2, 0, input2.length(), _BisonLexer.YYINITIAL);
+        int lastEnd = 0;
+        IElementType token;
+        while ((token = lexer.advance()) != null) {
+            lastEnd = lexer.getTokenEnd();
+        }
+        assertEquals("After reset, last token end should equal new input length.",
+                input2.length(), lastEnd);
+    }
+
     private record TokenInfo(IElementType type, String text) {
         String name() {
             // Extract directive/token name from toString: "BisonTokenType.NAME"

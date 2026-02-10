@@ -186,7 +186,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
     "'" {yybegin(YYINITIAL); return CHAR_LITERAL;}
    [^']+ { /* do nothing */ }
     {EOL} { return BAD_CHARACTER; }
-     <<EOF>> { throw new Error("Unexpected EOF"); }
+     <<EOF>> { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 <SC_ESCAPED_STRING>
@@ -194,7 +194,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "\"" {yybegin(YYINITIAL); return STRING;}
   [^\"]+ { /* do nothing */ }
   {EOL} { return BAD_CHARACTER; }
-  <<EOF>> { throw new Error("Unexpected EOF"); }
+  <<EOF>> { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 <SC_ESCAPED_TSTRING>
@@ -202,7 +202,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "\")" {yybegin(YYINITIAL); return TSTRING;}
   [^)\"]+ { /* do nothing */ }
   {EOL} { return BAD_CHARACTER; }
-  <<EOF>> { throw new Error("Unexpected EOF"); }
+  <<EOF>> { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
   /*--------------------------------------------.
@@ -213,16 +213,16 @@ xint=      0[xX][0-9abcdefABCDEF]+
 {
   '             { yybegin(context_state); }
   . | \\'       { /* do nothing */ }
-  {EOL}         { throw new Error("Unexpected EOL"); }
-  <<EOF>>       { throw new Error("Unexpected EOF"); }
+  {EOL}         { yybegin(YYINITIAL); return BAD_CHARACTER; }
+  <<EOF>>       { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 <SC_STRING>
 {
   \"            { yybegin(context_state); }
   . | \\\"      { /* do nothing */ }
-  {EOL}         { throw new Error("Unexpected EOL"); }
-  <<EOF>>       { throw new Error("Unexpected EOF"); }
+  {EOL}         { yybegin(YYINITIAL); return BAD_CHARACTER; }
+  <<EOF>>       { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 
@@ -233,7 +233,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
 <SC_COMMENT>
 {
   ~("*"{splice}"/")  {yybegin(context_state);}
-  <<EOF>>         { throw new Error("Unexpected EOF"); }
+  <<EOF>>         { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 
@@ -269,7 +269,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
      (as '<' '<%').  */
   "<"{splice}"<"  { /* do nothing */ }
 
-  <<EOF>>   { throw new Error("Unexpected EOF"); }
+  <<EOF>>   { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 <SC_BRACED_CODE> {
@@ -285,8 +285,8 @@ xint=      0[xX][0-9abcdefABCDEF]+
 
 <SC_PROLOGUE> {
     "%}" {  yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
-    ~"%}" { yypushback(2);}
-    <<EOF>>   { throw new Error("Unexpected EOF"); }
+    . | {EOL} { /* consume prologue content character by character */ }
+    <<EOF>>   { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 <SC_EPILOGUE> {
@@ -298,7 +298,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
     "/lex"      { yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
     /* Consume any lex-block content until the /lex terminator is encountered. */
     [^]          { /* do nothing */ }
-    <<EOF>>     { throw new Error("Unexpected EOF in lex block"); }
+    <<EOF>>     { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
   /*--------------------------------------------------------------.
@@ -310,7 +310,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   ">" { if (--nesting < 0) { yybegin(YYINITIAL); return TAG_TAG; } }
   ([^<>]|->)+ { /* do nothing */ }
   "<"+   { nesting += yylength(); }
-  <<EOF>>   { throw new Error("unexpected_eof");}
+  <<EOF>>   { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 [^] { return BAD_CHARACTER; }
