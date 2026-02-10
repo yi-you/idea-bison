@@ -337,21 +337,19 @@ public class JisonLexerTest {
                 %%
                 e : e '+' e | NUMBER ;
                 """;
-        _BisonLexer lexer = new _BisonLexer();
-        lexer.reset(input, 0, input.length(), _BisonLexer.YYINITIAL);
+        assertNoTokenGaps(input);
+    }
 
-        int lastEnd = 0;
-        IElementType token;
-        while ((token = lexer.advance()) != null) {
-            int start = lexer.getTokenStart();
-            int end = lexer.getTokenEnd();
-            assertTrue("Token start should be >= lastEnd. start=" + start + " lastEnd=" + lastEnd,
-                    start >= lastEnd);
-            assertTrue("Token end should be > start. end=" + end + " start=" + start,
-                    end > start);
-            lastEnd = end;
-        }
-        assertEquals("Last token end should equal input length.", input.length(), lastEnd);
+    @Test
+    public void testTokenPositionsCoverEntireInputWithPrologue() throws IOException {
+        String input = "%{\n  code\n%}\n%%\ne : ID ;\n";
+        assertNoTokenGaps(input);
+    }
+
+    @Test
+    public void testTokenPositionsCoverEntireInputWithLexBlock() throws IOException {
+        String input = "%lex\n%%\n\\s+ /* skip */\n/lex\n%%\ne : ID ;\n";
+        assertNoTokenGaps(input);
     }
 
     @Test
@@ -362,15 +360,7 @@ public class JisonLexerTest {
                 %%
                 some epilogue code
                 """;
-        _BisonLexer lexer = new _BisonLexer();
-        lexer.reset(input, 0, input.length(), _BisonLexer.YYINITIAL);
-
-        int lastEnd = 0;
-        IElementType token;
-        while ((token = lexer.advance()) != null) {
-            lastEnd = lexer.getTokenEnd();
-        }
-        assertEquals("Last token end should equal input length.", input.length(), lastEnd);
+        assertNoTokenGaps(input);
     }
 
     @Test
@@ -467,22 +457,17 @@ public class JisonLexerTest {
                 "    | VAR\n" +
                 "    ;\n";
 
-        _BisonLexer lexer = new _BisonLexer();
-        lexer.reset(input, 0, input.length(), _BisonLexer.YYINITIAL);
+        // Verify no gaps in token coverage (root cause of IllegalStateException)
+        assertNoTokenGaps(input);
 
-        int lastEnd = 0;
-        IElementType token;
-        while ((token = lexer.advance()) != null) {
-            int start = lexer.getTokenStart();
-            int end = lexer.getTokenEnd();
-            // Check for gaps
-            assertEquals("Gap detected at position " + lastEnd + ": chars '" +
-                    input.substring(lastEnd, Math.min(start, input.length())).replace("\n", "\\n") + "' not covered by any token",
-                    lastEnd, start);
-            assertTrue("Token end should be > start", end > start);
-            lastEnd = end;
-        }
-        assertEquals("Last token end should equal input length.", input.length(), lastEnd);
+        // Verify token content
+        List<TokenInfo> tokens = tokenize(input);
+        assertTrue("Expected lex block to be tokenized as prologue.",
+                tokens.stream().anyMatch(t -> GeneratedTypes.PROLOGUE_LITERAL.equals(t.type)));
+        long percentCount = tokens.stream().filter(t -> "%%".equals(t.text)).count();
+        assertEquals("Expected exactly 1 %% token outside lex block.", 1, percentCount);
+        assertTrue("No BAD_CHARACTER tokens should be present.",
+                tokens.stream().noneMatch(t -> TokenType.BAD_CHARACTER.equals(t.type)));
     }
 
     private record TokenInfo(IElementType type, String text) {
@@ -505,6 +490,24 @@ public class JisonLexerTest {
             tokens.add(new TokenInfo(token, text));
         }
         return tokens;
+    }
+
+    private static void assertNoTokenGaps(String input) throws IOException {
+        _BisonLexer lexer = new _BisonLexer();
+        lexer.reset(input, 0, input.length(), _BisonLexer.YYINITIAL);
+
+        int lastEnd = 0;
+        IElementType token;
+        while ((token = lexer.advance()) != null) {
+            int start = lexer.getTokenStart();
+            int end = lexer.getTokenEnd();
+            assertEquals("Gap detected at position " + lastEnd,
+                    lastEnd, start);
+            assertTrue("Token end should be > start. end=" + end + " start=" + start,
+                    end > start);
+            lastEnd = end;
+        }
+        assertEquals("Last token end should equal input length.", input.length(), lastEnd);
     }
 
     private static void assertJisonInputTokenizesCorrectly(String input, int expectedPercentCount) throws IOException {
