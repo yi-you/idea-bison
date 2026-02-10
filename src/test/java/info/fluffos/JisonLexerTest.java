@@ -434,6 +434,57 @@ public class JisonLexerTest {
                 input2.length(), lastEnd);
     }
 
+    @Test
+    public void testLambdaCalculusJisonGrammar() throws IOException {
+        // Lambda calculus grammar by Zach Carter - from jison examples
+        String input = "/* Lambda calculus grammar by Zach Carter */\n" +
+                "\n" +
+                "%lex\n" +
+                "%%\n" +
+                "\n" +
+                "\\s*\\n\\s*  {/* ignore */}\n" +
+                "\"(\"       { return '('; }\n" +
+                "\")\"       { return ')'; }\n" +
+                "\"^\"|\"\u03BB\"   { return 'LAMBDA'; }\n" +
+                "\".\"\\s?    { return '.'; }\n" +
+                "[a-zA-Z]  { return 'VAR'; }\n" +
+                "\\s+       { return 'SEP'; }\n" +
+                "<<EOF>>   { return 'EOF'; }\n" +
+                "\n" +
+                "/lex\n" +
+                "\n" +
+                "%%\n" +
+                "\n" +
+                "file\n" +
+                "    : EOF\n" +
+                "    | e EOF\n" +
+                "    ;\n" +
+                "\n" +
+                "e\n" +
+                "    : LAMBDA VAR '.' e\n" +
+                "    | e e\n" +
+                "    | '(' e ')'\n" +
+                "    | VAR\n" +
+                "    ;\n";
+
+        _BisonLexer lexer = new _BisonLexer();
+        lexer.reset(input, 0, input.length(), _BisonLexer.YYINITIAL);
+
+        int lastEnd = 0;
+        IElementType token;
+        while ((token = lexer.advance()) != null) {
+            int start = lexer.getTokenStart();
+            int end = lexer.getTokenEnd();
+            // Check for gaps
+            assertEquals("Gap detected at position " + lastEnd + ": chars '" +
+                    input.substring(lastEnd, Math.min(start, input.length())).replace("\n", "\\n") + "' not covered by any token",
+                    lastEnd, start);
+            assertTrue("Token end should be > start", end > start);
+            lastEnd = end;
+        }
+        assertEquals("Last token end should equal input length.", input.length(), lastEnd);
+    }
+
     private record TokenInfo(IElementType type, String text) {
         String name() {
             // Extract directive/token name from toString: "BisonTokenType.NAME"
