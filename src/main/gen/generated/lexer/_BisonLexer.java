@@ -564,6 +564,9 @@ public class _BisonLexer {
   int percent_percent_count = 0;
   int nesting = 0;
   int context_state;
+  /* Tracks start position for multi-char tokens that span opening/closing delimiters
+     (e.g., %lex.../lex, %{...%}, '...', "...", {...}, <...>).
+     Set when entering a sub-state; -1 means no saved position (normal token). */
   int tokenStart = -1;
 
   /** Whether the lexer was reset with a CharSequence (all data pre-loaded). */
