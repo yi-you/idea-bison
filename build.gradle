@@ -17,13 +17,12 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version = '2022.3'
-    type = "CL"
+    version.set("CL-2022.3")
 }
 
 patchPluginXml {
-    sinceBuild = "223.*"
-    untilBuild = ""
+    sinceBuild = "223.0"
+    untilBuild = "223.*"
     changeNotes = """
       <p>2023.03.03 support %parse-param and %lex-param.</p>
       <p>2022.12.26 update to 2022.3, and structure view!</p>
