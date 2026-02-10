@@ -4,8 +4,8 @@
     <vendor email="sunyucong@gmail.com" url="https://github.com/thefallentree/idea-bison">Yucong Sun</vendor>
 
     <description><![CDATA[
-<p>
-	This plugin adds Bison grammar file support (*.y).
+    <p>
+	This plugin adds Bison/Jison grammar file support (*.y, *.jison).
 </p>
 <p>
 	<br />
@@ -45,7 +45,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
-        <fileType implementationClass="info.fluffos.BisonFileType" name="Bison Grammar File" fieldName="INSTANCE" language="Bison" extensions="y"/>
+        <fileType implementationClass="info.fluffos.BisonFileType" name="Bison/Jison Grammar File" fieldName="INSTANCE" language="Bison" extensions="y;jison"/>
         <lang.parserDefinition language="Bison" implementationClass="info.fluffos.BisonParserDefinition"/>
         <lang.foldingBuilder language="Bison" implementationClass="info.fluffos.BisonFoldingBuilder"/>
         <lang.syntaxHighlighterFactory language="Bison" implementationClass="info.fluffos.BisonSyntaxHighlighterFactory"/>

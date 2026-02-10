@@ -19,13 +19,13 @@ public class BisonFileType extends LanguageFileType {
     @NotNull
     @Override
     public String getName() {
-        return "Bison Grammar File";
+        return "Bison/Jison Grammar File";
     }
 
     @NotNull
     @Override
     public String getDescription() {
-        return "Bison language file";
+        return "Bison/Jison language file";
     }
 
     @NotNull
