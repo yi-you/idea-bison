@@ -16,6 +16,10 @@ import static generated.GeneratedTypes.*;
   int percent_percent_count = 0;
   int nesting = 0;
   int context_state;
+  /* Tracks start position for multi-char tokens that span opening/closing delimiters
+     (e.g., %lex.../lex, %{...%}, '...', "...", {...}, <...>).
+     Set when entering a sub-state; -1 means no saved position (normal token). */
+  int tokenStart = -1;
 %}
 
 %public
@@ -117,7 +121,13 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "%union"                          { return BisonTokenType.directive("union"); }
   "%verbose"                        { return BisonTokenType.directive("VERBOSE"); }
   "%yacc"                           { return BisonTokenType.directive("yacc"); }
-  "%lex"                            { yybegin(SC_LEX); }
+  /* Jison-specific directives */
+  "%options"                        { return BisonTokenType.directive("options"); }
+  "%ebnf"                           { return BisonTokenType.directive("ebnf"); }
+  "%include"                        { return BisonTokenType.directive("include"); }
+  "%s"                              { return BisonTokenType.directive("s"); }
+  "%x"                              { return BisonTokenType.directive("x"); }
+  "%lex"                            { tokenStart = zzStartRead; yybegin(SC_LEX); }
   /* Deprecated since Bison 2.3b (2008-05-27), but the warning is
      issued only since Bison 3.4. */
   "%pure"[-_]"parser"                { return BisonTokenType.directive("PURE_PARSER"); }
@@ -152,13 +162,13 @@ xint=      0[xX][0-9abcdefABCDEF]+
 
 
   /* Characters.  */
-  "'"         {yybegin(SC_ESCAPED_CHARACTER);}
+  "'"         { tokenStart = zzStartRead; yybegin(SC_ESCAPED_CHARACTER);}
   /* Strings. */
-  \"        {yybegin(SC_ESCAPED_STRING);}
-  "_(\""      {yybegin(SC_ESCAPED_TSTRING);}
+  \"        { tokenStart = zzStartRead; yybegin(SC_ESCAPED_STRING);}
+  "_(\""      { tokenStart = zzStartRead; yybegin(SC_ESCAPED_TSTRING);}
 
-  "%{"                { yybegin(SC_PROLOGUE); }
-  "{"                 {nesting = 0; yybegin(SC_BRACED_CODE); }
+  "%{"                { tokenStart = zzStartRead; yybegin(SC_PROLOGUE); }
+  "{"                 { tokenStart = zzStartRead; nesting = 0; yybegin(SC_BRACED_CODE); }
   "%%"               { if(++percent_percent_count == 2) yybegin(SC_EPILOGUE); return BisonTokenType.token("%%"); }
 
   {ID}                { return ID; }
@@ -168,12 +178,12 @@ xint=      0[xX][0-9abcdefABCDEF]+
   {xint}          { return INT_LITERAL; }
 
   /* Semantic predicate. */
-  "%?"([ \f\t\v]|{EOL})*"{" {nesting = 0; yybegin(SC_PREDICATE); }
+  "%?"([ \f\t\v]|{EOL})*"{" { tokenStart = zzStartRead; nesting = 0; yybegin(SC_PREDICATE); }
 
     /* A type. */
     "<*>"       {return TAG_ANY;}
     "<>"        { return TAG_NONE;}
-    "<"         { nesting = 0; yybegin(SC_TAG); }
+    "<"         { tokenStart = zzStartRead; nesting = 0; yybegin(SC_TAG); }
 
 }
 
@@ -182,7 +192,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
     "'" {yybegin(YYINITIAL); return CHAR_LITERAL;}
    [^']+ { /* do nothing */ }
     {EOL} { return BAD_CHARACTER; }
-     <<EOF>> { throw new Error("Unexpected EOF"); }
+     <<EOF>> { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 <SC_ESCAPED_STRING>
@@ -190,7 +200,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "\"" {yybegin(YYINITIAL); return STRING;}
   [^\"]+ { /* do nothing */ }
   {EOL} { return BAD_CHARACTER; }
-  <<EOF>> { throw new Error("Unexpected EOF"); }
+  <<EOF>> { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 <SC_ESCAPED_TSTRING>
@@ -198,7 +208,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "\")" {yybegin(YYINITIAL); return TSTRING;}
   [^)\"]+ { /* do nothing */ }
   {EOL} { return BAD_CHARACTER; }
-  <<EOF>> { throw new Error("Unexpected EOF"); }
+  <<EOF>> { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
   /*--------------------------------------------.
@@ -209,16 +219,16 @@ xint=      0[xX][0-9abcdefABCDEF]+
 {
   '             { yybegin(context_state); }
   . | \\'       { /* do nothing */ }
-  {EOL}         { throw new Error("Unexpected EOL"); }
-  <<EOF>>       { throw new Error("Unexpected EOF"); }
+  {EOL}         { yybegin(YYINITIAL); return BAD_CHARACTER; }
+  <<EOF>>       { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 <SC_STRING>
 {
   \"            { yybegin(context_state); }
   . | \\\"      { /* do nothing */ }
-  {EOL}         { throw new Error("Unexpected EOL"); }
-  <<EOF>>       { throw new Error("Unexpected EOF"); }
+  {EOL}         { yybegin(YYINITIAL); return BAD_CHARACTER; }
+  <<EOF>>       { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 
@@ -229,7 +239,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
 <SC_COMMENT>
 {
   ~("*"{splice}"/")  {yybegin(context_state);}
-  <<EOF>>         { throw new Error("Unexpected EOF"); }
+  <<EOF>>         { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 
@@ -265,7 +275,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
      (as '<' '<%').  */
   "<"{splice}"<"  { /* do nothing */ }
 
-  <<EOF>>   { throw new Error("Unexpected EOF"); }
+  <<EOF>>   { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 <SC_BRACED_CODE> {
@@ -280,13 +290,13 @@ xint=      0[xX][0-9abcdefABCDEF]+
 }
 
 <SC_PROLOGUE> {
-    "%}" {  yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
-    ~"%}" { yypushback(2);}
-    <<EOF>>   { throw new Error("Unexpected EOF"); }
+    "%}" { yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
+    . | {EOL} { /* consume prologue content character by character */ }
+    <<EOF>>   { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 <SC_EPILOGUE> {
-   .+ | {EOL}  { /* do nothing */ }
+   .+ | {EOL}  { if (tokenStart < 0) tokenStart = zzStartRead; }
     <<EOF>>   { yybegin(YYINITIAL); return EPILOGUE_LITERAL; }
 }
 
@@ -294,7 +304,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
     "/lex"      { yybegin(YYINITIAL); return PROLOGUE_LITERAL; }
     /* Consume any lex-block content until the /lex terminator is encountered. */
     [^]          { /* do nothing */ }
-    <<EOF>>     { throw new Error("Unexpected EOF in lex block"); }
+    <<EOF>>     { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
   /*--------------------------------------------------------------.
@@ -306,7 +316,7 @@ xint=      0[xX][0-9abcdefABCDEF]+
   ">" { if (--nesting < 0) { yybegin(YYINITIAL); return TAG_TAG; } }
   ([^<>]|->)+ { /* do nothing */ }
   "<"+   { nesting += yylength(); }
-  <<EOF>>   { throw new Error("unexpected_eof");}
+  <<EOF>>   { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 [^] { return BAD_CHARACTER; }
