@@ -39,6 +39,9 @@ prologue_declaration ::= prologue
            | '%token-table'
            | '%verbose'
            | '%yacc'
+           | '%options' ID*
+           | '%ebnf'
+           | '%include' STRING?
            | error? ';'
 
 

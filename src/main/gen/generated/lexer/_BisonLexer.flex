@@ -117,6 +117,10 @@ xint=      0[xX][0-9abcdefABCDEF]+
   "%union"                          { return BisonTokenType.directive("union"); }
   "%verbose"                        { return BisonTokenType.directive("VERBOSE"); }
   "%yacc"                           { return BisonTokenType.directive("yacc"); }
+  /* Jison-specific directives */
+  "%options"                        { return BisonTokenType.directive("options"); }
+  "%ebnf"                           { return BisonTokenType.directive("ebnf"); }
+  "%include"                        { return BisonTokenType.directive("include"); }
   "%lex"                            { yybegin(SC_LEX); }
   /* Deprecated since Bison 2.3b (2008-05-27), but the warning is
      issued only since Bison 3.4. */

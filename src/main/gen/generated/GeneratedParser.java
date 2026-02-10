@@ -419,6 +419,9 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, "%token-table");
     if (!r) r = consumeToken(b, "%verbose");
     if (!r) r = consumeToken(b, "%yacc");
+    if (!r) r = prologue_declaration_20(b, l + 1);
+    if (!r) r = consumeToken(b, "%ebnf");
+    if (!r) r = prologue_declaration_22(b, l + 1);
     if (!r) r = prologue_declaration_19(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -602,6 +605,46 @@ public class GeneratedParser implements PsiParser, LightPsiParser {
   private static boolean prologue_declaration_19_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "prologue_declaration_19_0")) return false;
     consumeToken(b, ERROR);
+    return true;
+  }
+
+  // '%options' ID*
+  private static boolean prologue_declaration_20(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "prologue_declaration_20")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, "%options");
+    r = r && prologue_declaration_20_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // ID*
+  private static boolean prologue_declaration_20_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "prologue_declaration_20_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, ID)) break;
+      if (!empty_element_parsed_guard_(b, "prologue_declaration_20_1", c)) break;
+    }
+    return true;
+  }
+
+  // '%include' STRING?
+  private static boolean prologue_declaration_22(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "prologue_declaration_22")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, "%include");
+    r = r && prologue_declaration_22_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // STRING?
+  private static boolean prologue_declaration_22_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "prologue_declaration_22_1")) return false;
+    consumeToken(b, STRING);
     return true;
   }
 
